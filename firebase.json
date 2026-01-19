@@ -1,0 +1,22 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "fitfutureapp",
+                    "appId": "1:417606614079:android:e2797aa3db288bd583cc8a",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "fitfutureapp",
+                    "configurations": {
+                        "android": "1:417606614079:android:e2797aa3db288bd583cc8a",
+                        "ios": "1:417606614079:ios:1f09692f2b270f0983cc8a"
+                    }
+                }
+            }
+        }
+    }
+}

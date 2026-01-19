@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "417606614079",
+    "project_id": "fitfutureapp",
+    "storage_bucket": "fitfutureapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:417606614079:android:e2797aa3db288bd583cc8a",
+        "android_client_info": {
+          "package_name": "com.fitfuture.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvd2tiuuMJoHnlvZ2yALAS0QyaeCNlW7k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:417606614079:android:51d5e5e5f8b2f3ed83cc8a",
+        "android_client_info": {
+          "package_name": "com.teknospot.fitfuture"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvd2tiuuMJoHnlvZ2yALAS0QyaeCNlW7k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
