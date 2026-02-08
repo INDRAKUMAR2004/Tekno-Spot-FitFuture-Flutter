@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:fitfuture/screens/exercise_video_screen.dart';
 
 class ExerciseDetails extends StatelessWidget {
-  const ExerciseDetails({super.key});
+  final Map<String, String> exercise;
+
+  const ExerciseDetails({super.key, required this.exercise});
 
   static const neonGreen = Color(0xFF39FF14);
   static const darkBg = Colors.black;
 
   @override
   Widget build(BuildContext context) {
+    // Determine video URL based on title (or fallback)
+    String videoUrl =
+        "https://test-videos.co.uk/vids/jellyfish/mp4/h264/1080/Jellyfish_1080_10s_1MB.mp4"; // Default sample
+
+    // Using some sample exercise clips from a different source
+    if (exercise["title"] == "Plank Hold") {
+      videoUrl =
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+    } else {
+      // General fitness related sample
+      videoUrl =
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4";
+    }
+
     return Scaffold(
       backgroundColor: darkBg,
       body: SingleChildScrollView(
@@ -22,8 +39,10 @@ class ExerciseDetails extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(color: neonGreen, width: 2),
-                image: const DecorationImage(
-                  image: AssetImage("assets/Images/plank.jpg"),
+                image: DecorationImage(
+                  image: AssetImage(exercise["image"] ??
+                      exercise["img"] ??
+                      "assets/Images/plank.jpg"),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -31,20 +50,19 @@ class ExerciseDetails extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Title + Duration
-            const Text(
-              "Plank Hold",
-              textAlign: TextAlign.center,
-              style: TextStyle(
+            Text(
+              exercise["title"] ?? "Exercise",
+              textAlign: TextAlign.left,
+              style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: neonGreen,
               ),
             ),
             const SizedBox(height: 5),
-            const Text(
-              "00:30",
-              textAlign: TextAlign.center,
-              style: TextStyle(
+            Text(
+              exercise["duration"] ?? "01:00",
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
               ),
@@ -52,31 +70,32 @@ class ExerciseDetails extends StatelessWidget {
 
             // Key Details
             const SectionHeader(title: "Key Details"),
-            const DetailText(text: "• Duration: 30 Seconds"),
-            const DetailText(text: "• Calories Burned: ~5 kcal"),
+            DetailText(
+                text: "• Duration: ${exercise["duration"] ?? "1 Minute"}"),
+            const DetailText(text: "• Calories Burned: ~6 kcal"),
             const DetailText(text: "• Difficulty: Beginner/Intermediate"),
 
             // Step by Step
             const SectionHeader(title: "Step-by-Step Guide"),
-            const DetailText(text: "• How to set up: Elbows under shoulders, body in straight line."),
-            const DetailText(text: "• Maintain form: Engage core, don’t drop hips."),
-            const DetailText(text: "• Avoid mistakes: Don’t hold breath during plank."),
+            const DetailText(
+                text:
+                    "• How to set up: Maintain proper posture and engage core."),
+            const DetailText(
+                text: "• Maintain form: Keep movements controlled and steady."),
+            const DetailText(
+                text:
+                    "• Avoid mistakes: Don't rush; focus on the target muscle."),
 
             // Safety Tips
             const SectionHeader(title: "Safety Tips"),
-            const DetailText(text: "• Keep core tight to avoid arching or sagging lower back."),
-            const DetailText(text: "• Align shoulders over elbows to prevent shoulder strain."),
-            const DetailText(text: "• Stop if sharp pain occurs."),
-
-            // Breathing Tips
-            const SectionHeader(title: "Breathing Tips"),
-            const DetailText(text: "• Inhale through nose for slow count of four."),
-            const DetailText(text: "• Exhale through mouth for slow count of four, keeping core tight."),
-            const DetailText(text: "• Maintain steady rhythm."),
+            const DetailText(
+                text: "• Stop immediately if you feel sharp pain."),
+            const DetailText(text: "• Keep the area clear of obstructions."),
+            const DetailText(text: "• Stay hydrated throughout your workout."),
 
             const SizedBox(height: 30),
 
-            // Continue Button
+            // Continue Button (Now plays video)
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: neonGreen,
@@ -89,7 +108,15 @@ class ExerciseDetails extends StatelessWidget {
                 elevation: 6,
               ),
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ExerciseVideoScreen(
+                      exerciseTitle: exercise["title"] ?? "Exercise",
+                      videoUrl: videoUrl,
+                    ),
+                  ),
+                );
               },
               child: const Center(
                 child: Text(
@@ -101,6 +128,7 @@ class ExerciseDetails extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

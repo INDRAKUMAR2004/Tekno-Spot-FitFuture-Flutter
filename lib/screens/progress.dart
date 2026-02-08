@@ -1,6 +1,8 @@
+import 'package:fitfuture/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 
 class ProgressTracking extends StatefulWidget {
   const ProgressTracking({super.key});
@@ -25,117 +27,130 @@ class _ProgressTrackingState extends State<ProgressTracking> {
 
     if (activity.isEmpty || duration.isEmpty || kcal.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in all fields")),
+        const SnackBar(
+            content: Text("Please fill in all fields"),
+            behavior: SnackBarBehavior.floating),
       );
       return;
     }
 
     try {
-      await firestore.collection("users").doc(user!.uid).update({
+      await firestore.collection("users").doc(user!.uid).set({
         "activity": {
           "done": activity,
           "duration": duration,
           "calories_burned": kcal,
+          "updatedAt": FieldValue.serverTimestamp(),
         }
-      });
+      }, SetOptions(merge: true));
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ Activity updated successfully")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("✅ Activity updated successfully"),
+              backgroundColor: AppConstants.neonGreen,
+              behavior: SnackBarBehavior.floating),
+        );
+        Navigator.pop(context);
+      }
 
       activityCtrl.clear();
       durationCtrl.clear();
       kcalCtrl.clear();
-      Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating activity: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Error updating activity: $e"),
+              behavior: SnackBarBehavior.floating),
+        );
+      }
     }
   }
 
   void _showAddActivityModal() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: const Color(0xFF111111),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Enter Activity",
-                  style: TextStyle(
-                    fontSize: 18,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppConstants.surfaceColor,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              const Text(
+                "Track New Activity",
+                style: TextStyle(
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF39FF14),
-                  ),
+                    color: AppConstants.neonGreen),
+              ),
+              const SizedBox(height: 25),
+              _buildInput(activityCtrl, "Activity name", Icons.directions_run),
+              _buildInput(durationCtrl, "Duration (min)", Icons.timer,
+                  isNumber: true),
+              _buildInput(
+                  kcalCtrl, "Calories Burned", Icons.local_fire_department,
+                  isNumber: true),
+              const SizedBox(height: 25),
+              ElevatedButton(
+                onPressed: _addActivity,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.neonGreen,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                  minimumSize: const Size(double.infinity, 54),
                 ),
-                const SizedBox(height: 15),
-                _buildInput(activityCtrl, "Activity name"),
-                _buildInput(durationCtrl, "Duration (min)", isNumber: true),
-                _buildInput(kcalCtrl, "Calories", isNumber: true),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _addActivity,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF39FF14),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  child: const Text(
-                    "Add Activity",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
+                child: const Text("Update Progress",
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              ),
+              const SizedBox(height: 10),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildInput(TextEditingController ctrl, String hint,
+  Widget _buildInput(TextEditingController ctrl, String hint, IconData icon,
       {bool isNumber = false}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 15),
       child: TextField(
         controller: ctrl,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: Colors.grey),
+          labelText: hint,
+          labelStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: Icon(icon, color: AppConstants.neonGreen),
           filled: true,
-          fillColor: const Color(0xFF1a1a1a),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
+          fillColor: AppConstants.darkBackground,
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(color: Colors.grey[800]!)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: AppConstants.neonGreen)),
         ),
-      ),
-    );
-  }
-
-  Widget _buildActivityRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: const TextStyle(color: Colors.white70, fontSize: 15)),
-          Text(value.isNotEmpty ? value : "N/A",
-              style: const TextStyle(color: Color(0xFF39FF14), fontSize: 15)),
-        ],
       ),
     );
   }
@@ -143,11 +158,11 @@ class _ProgressTrackingState extends State<ProgressTracking> {
   @override
   Widget build(BuildContext context) {
     if (user == null) {
-      return const Center(
-        child: Text(
-          "Please log in to view your progress.",
-          style: TextStyle(color: Colors.white),
-        ),
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+            child: Text("Please log in to view progress",
+                style: TextStyle(color: Colors.white))),
       );
     }
 
@@ -159,110 +174,153 @@ class _ProgressTrackingState extends State<ProgressTracking> {
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF39FF14)),
-              );
+                  child:
+                      CircularProgressIndicator(color: AppConstants.neonGreen));
             }
 
             final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
             final activity = data["activity"] ?? {};
-            final name = data["name"] ?? "Guest User";
-            final age = data["age"] ?? "N/A";
-            final weight = data["weight"] ?? "N/A";
-            final height = data["height"] ?? "N/A";
+            final name = data["name"] ?? "Athlete";
+
+            double caloriesBurned = double.tryParse(
+                    activity["calories_burned"]?.toString() ?? "0") ??
+                0;
+            double calorieGoal = 500.0; // Simulated goal
+            double percent = (caloriesBurned / calorieGoal).clamp(0.0, 1.0);
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(16).copyWith(top: 30),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Progress Tracking",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF39FF14),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  /// Profile Card
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF111111),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(name,
-                                style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-                            const SizedBox(height: 4),
-                            Text("Age: $age",
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.grey)),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                _buildStat("$weight Kg"),
-                                const SizedBox(width: 15),
-                                _buildStat("$height m"),
-                              ],
-                            )
-                          ],
-                        ),
-                        const CircleAvatar(
-                          radius: 40,
-                          backgroundImage: NetworkImage(
-                              "https://randomuser.me/api/portraits/men/20.jpg"),
-                        ),
-                      ],
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Hello, $name",
+                              style: const TextStyle(
+                                  color: Colors.grey, fontSize: 14)),
+                          const Text("Daily Progress",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: _showAddActivityModal,
+                        icon: const Icon(Icons.add_circle,
+                            color: AppConstants.neonGreen, size: 32),
+                      )
+                    ],
                   ),
                   const SizedBox(height: 30),
 
-                  /// Add Activity Button
-                  ElevatedButton(
-                    onPressed: _showAddActivityModal,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF39FF14),
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  // Goal Indicator
+                  Center(
+                    child: CircularPercentIndicator(
+                      radius: 80.0,
+                      lineWidth: 12.0,
+                      percent: percent,
+                      center: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("${(percent * 100).toInt()}%",
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold)),
+                          const Text("Goal",
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 12)),
+                        ],
                       ),
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    child: const Text(
-                      "+ Add Activity",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      progressColor: AppConstants.neonGreen,
+                      backgroundColor: Colors.grey[900]!,
+                      circularStrokeCap: CircularStrokeCap.round,
+                      animation: true,
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 40),
 
-                  /// Activity Summary BELOW button
-                  const Text(
-                    "Activity Summary",
-                    style: TextStyle(
-                      color: Color(0xFF39FF14),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  // Stats Grid
+                  Row(
+                    children: [
+                      Expanded(
+                          child: _statCard(
+                              "Calories",
+                              "${caloriesBurned.toInt()}",
+                              "kcal",
+                              Icons.local_fire_department,
+                              Colors.orange)),
+                      const SizedBox(width: 15),
+                      Expanded(
+                          child: _statCard(
+                              "Duration",
+                              activity["duration"]?.toString() ?? "0",
+                              "min",
+                              Icons.timer,
+                              Colors.blue)),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  _statCard(
+                      "Last Activity",
+                      activity["done"]?.toString() ?? "None",
+                      "",
+                      Icons.directions_run,
+                      AppConstants.neonGreen,
+                      fullWidth: true),
+
+                  const SizedBox(height: 30),
+
+                  // Weekly Chart Placeholder
+                  const Text("Weekly Activity",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 15),
+                  Container(
+                    height: 150,
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppConstants.surfaceColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: List.generate(7, (index) {
+                        double height =
+                            [0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.3][index];
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 80 * height,
+                              decoration: BoxDecoration(
+                                color: index == 3
+                                    ? AppConstants.neonGreen
+                                    : Colors.grey[800],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(["M", "T", "W", "T", "F", "S", "S"][index],
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 10)),
+                          ],
+                        );
+                      }),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  _buildActivityRow(
-                      "Activity Done", activity["done"]?.toString() ?? "N/A"),
-                  _buildActivityRow("Calories Burned",
-                      activity["calories_burned"]?.toString() ?? "N/A"),
-                  _buildActivityRow(
-                      "Duration", "${activity["duration"]?.toString() ?? 'N/A'} min"),
+                  const SizedBox(height: 30),
                 ],
               ),
             );
@@ -272,16 +330,53 @@ class _ProgressTrackingState extends State<ProgressTracking> {
     );
   }
 
-  Widget _buildStat(String value) {
+  Widget _statCard(
+      String label, String value, String unit, IconData icon, Color color,
+      {bool fullWidth = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1a1a1a),
-        borderRadius: BorderRadius.circular(8),
+        color: AppConstants.surfaceColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
-      child: Text(
-        value,
-        style: const TextStyle(fontSize: 14, color: Color(0xFF39FF14)),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                const SizedBox(height: 4),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                          text: value,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold)),
+                      if (unit.isNotEmpty)
+                        TextSpan(
+                            text: " $unit",
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
       ),
     );
   }

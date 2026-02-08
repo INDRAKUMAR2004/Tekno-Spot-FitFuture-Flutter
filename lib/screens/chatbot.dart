@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fitfuture/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -26,12 +27,6 @@ class ChatbotScreen extends StatefulWidget {
 class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
-  final String apiKey =
-      "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"; // ⚠️ Replace securely
-
-  final String apiUrl = "https://api.groq.com/openai/v1/chat/completions";
-  final String model = "llama-3.3-70b-versatile";
 
   List<ChatMessage> messages = [];
   bool loading = false;
@@ -83,13 +78,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       apiMessages.add({"role": "user", "content": userMsg.text});
 
       final response = await http.post(
-        Uri.parse(apiUrl),
+        Uri.parse(AppConstants.groqUrl),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer $apiKey",
+          "Authorization": "Bearer ${AppConstants.groqApiKey}",
         },
         body: jsonEncode({
-          "model": model,
+          "model": AppConstants.groqModel,
           "messages": apiMessages,
           "max_tokens": 800,
         }),
@@ -97,9 +92,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final assistantText =
-            data["choices"]?[0]?["message"]?["content"] ??
-                "Sorry, I couldn't generate a response right now.";
+        final assistantText = data["choices"]?[0]?["message"]?["content"] ??
+            "Sorry, I couldn't generate a response right now.";
 
         final aiMsg = ChatMessage(
           id: "${DateTime.now().millisecondsSinceEpoch}_ai",
@@ -156,13 +150,24 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         padding: const EdgeInsets.all(12),
         constraints: const BoxConstraints(maxWidth: 280),
         decoration: BoxDecoration(
-          color: isUser ? const Color(0xFF39FF14) : const Color(0xFF111111),
-          borderRadius: BorderRadius.circular(14).copyWith(
-            bottomRight: isUser ? const Radius.circular(4) : null,
+          color: isUser ? AppConstants.neonGreen : AppConstants.surfaceColor,
+          borderRadius: BorderRadius.circular(16).copyWith(
+            bottomRight: isUser ? const Radius.circular(0) : null,
+            bottomLeft: !isUser ? const Radius.circular(0) : null,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isUser
+                  ? AppConstants.neonGreen.withOpacity(0.2)
+                  : Colors.black.withOpacity(0.5),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
           border: isUser
               ? null
-              : Border.all(color: const Color(0xFF39FF14), width: 1),
+              : Border.all(
+                  color: AppConstants.neonGreen.withOpacity(0.5), width: 1),
         ),
         child: Column(
           crossAxisAlignment:
@@ -172,13 +177,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               msg.text,
               style: TextStyle(
                 fontSize: 15,
-                color: isUser ? Colors.black : const Color(0xFF39FF14),
+                color: isUser ? Colors.black : Colors.white,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               msg.time,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 10,
+                color: isUser ? Colors.black54 : Colors.grey,
+              ),
             ),
           ],
         ),
@@ -213,8 +222,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               child: ListView.builder(
                 controller: _scrollController,
                 itemCount: messages.length,
-                itemBuilder: (context, index) =>
-                    _buildMessage(messages[index]),
+                itemBuilder: (context, index) => _buildMessage(messages[index]),
               ),
             ),
             Container(
@@ -231,8 +239,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       style: const TextStyle(color: Color(0xFF39FF14)),
                       decoration: InputDecoration(
                         hintText: "Type a message...",
-                        hintStyle:
-                            const TextStyle(color: Color(0xFF777777)),
+                        hintStyle: const TextStyle(color: Color(0xFF777777)),
                         filled: true,
                         fillColor: const Color(0xFF111111),
                         contentPadding: const EdgeInsets.symmetric(

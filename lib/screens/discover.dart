@@ -1,4 +1,5 @@
 import 'package:fitfuture/screens/workoutoverview.dart';
+import 'package:fitfuture/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 class DiscoverScreen extends StatelessWidget {
@@ -7,172 +8,147 @@ class DiscoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppConstants.darkBackground,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16).copyWith(top: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// Header
-              const Text(
-                "Discover",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF39FF14),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Discover",
+                        style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                      Text(
+                        "Find your next challenge",
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: AppConstants.surfaceColor,
+                        borderRadius: BorderRadius.circular(12)),
+                    child:
+                        const Icon(Icons.search, color: AppConstants.neonGreen),
+                  )
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 25),
 
               /// Big Challenge Card
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => WorkoutOverview()));
-                },
-                child: Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: Image.asset(
-                        "assets/Images/plank.jpg",
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        color: Colors.black.withOpacity(0.3),
-                        colorBlendMode: BlendMode.darken,
-                      ),
-                    ),
-                    Positioned(
-                      left: 20,
-                      bottom: 20,
-                      right: 20,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "30-Days Plank Challenge",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF39FF14),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            "Strengthen Your Core Day By Day With Progressive Planks.",
-                            style: TextStyle(fontSize: 14, color: Colors.white),
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (_) => WorkoutOverview()));},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF39FF14),
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 15, vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              "Join Now",
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              _buildFeaturedCard(
+                context,
+                "30-Days Plank Challenge",
+                "Strengthen your core day by day with progressive planks.",
+                "assets/Images/plank.jpg",
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => WorkoutOverview())),
               ),
 
               /// Recommended Section
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               const Text(
                 "Recommended For You",
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF39FF14),
-                ),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               SizedBox(
-                height: 160,
+                height: 200,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    buildSmallCard(
+                    _buildSmallCard(
+                      context,
                       "Core & Cardio Fusion",
-                      "30 Min • Core",
+                      "30 Min • Intermediate",
                       "assets/Images/bicycle.jpg",
                     ),
-                    buildSmallCard(
+                    _buildSmallCard(
+                      context,
                       "Sunrise Stretch Flow",
-                      "20 Min • Full Body",
+                      "20 Min • Beginner",
                       "assets/Images/russian.jpg",
                     ),
-                    buildSmallCard(
+                    _buildSmallCard(
+                      context,
                       "Upper-Body Power",
-                      "25 Min • Strength",
+                      "25 Min • Advanced",
                       "assets/Images/legraises.jpg",
                     ),
                   ],
                 ),
               ),
 
-              /// Another Banner
+              /// Premium Banner
               const SizedBox(height: 20),
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: Image.asset(
-                      "assets/Images/plank.jpg",
-                      height: 150,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      color: Colors.black.withOpacity(0.3),
-                      colorBlendMode: BlendMode.darken,
-                    ),
-                  ),
-                  const Positioned(
-                    left: 20,
-                    bottom: 20,
-                    right: 20,
-                    child: Text(
-                      "Your Muscles Are Ready. Let's Build Strength.",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF39FF14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: [AppConstants.neonGreen, Colors.blueAccent]),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Go Premium",
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18)),
+                          SizedBox(height: 4),
+                          Text(
+                              "Unlock all specialized workout plans & diet guides.",
+                              style: TextStyle(
+                                  color: Colors.black87, fontSize: 12)),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    Icon(Icons.lock_open, color: Colors.black54, size: 40),
+                  ],
+                ),
               ),
 
               /// Next-Level Section
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               const Text(
                 "Next-Level Sessions",
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF39FF14),
-                ),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               SizedBox(
-                height: 150,
+                height: 180,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    buildSmallCard("Cardio Blast", "", "assets/Images/bicycle.jpg"),
-                    buildSmallCard("Core Burn", "", "assets/Images/russian.jpg"),
-                    buildSmallCard(
-                        "Endurance Row Circuit", "", "assets/Images/legraises.jpg"),
+                    _buildSmallCard(context, "Cardio Blast", "Hard",
+                        "assets/Images/bicycle.jpg"),
+                    _buildSmallCard(context, "Core Burn", "Intense",
+                        "assets/Images/russian.jpg"),
+                    _buildSmallCard(context, "Endurance Row", "Steady",
+                        "assets/Images/legraises.jpg"),
                   ],
                 ),
               ),
@@ -183,55 +159,119 @@ class DiscoverScreen extends StatelessWidget {
     );
   }
 
-  /// 🔹 Reusable Small Card Widget
-  Widget buildSmallCard(String title, String subtitle, String imagePath) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      width: 150,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black54,
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          )
-        ],
+  Widget _buildFeaturedCard(BuildContext context, String title,
+      String description, String imagePath, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 220,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+                color: AppConstants.neonGreen.withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 8))
+          ],
+        ),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(25),
+              child: Image.asset(imagePath,
+                  height: 220, width: double.infinity, fit: BoxFit.cover),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25),
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 20,
+              bottom: 20,
+              right: 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppConstants.neonGreen)),
+                  const SizedBox(height: 6),
+                  Text(description,
+                      style:
+                          const TextStyle(fontSize: 13, color: Colors.white70)),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                        color: AppConstants.neonGreen,
+                        borderRadius: BorderRadius.circular(10)),
+                    child: const Text("Join Now",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 13)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              imagePath,
-              width: 150,
-              height: 90,
-              fit: BoxFit.cover,
+    );
+  }
+
+  Widget _buildSmallCard(
+      BuildContext context, String title, String subtitle, String imagePath) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+          context, MaterialPageRoute(builder: (_) => WorkoutOverview())),
+      child: Container(
+        margin: const EdgeInsets.only(right: 15),
+        width: 160,
+        decoration: BoxDecoration(
+          color: AppConstants.surfaceColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+              child: Image.asset(imagePath,
+                  width: 160, height: 100, fit: BoxFit.cover),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (subtitle.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                subtitle,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF39FF14)),
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 14),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppConstants.neonGreen)),
+                ],
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

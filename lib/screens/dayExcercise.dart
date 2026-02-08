@@ -65,7 +65,7 @@ class DayExercises extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const ExerciseDetails(),
+                          builder: (_) => ExerciseDetails(exercise: exercise),
                         ),
                       );
                     },
@@ -158,7 +158,7 @@ class DayExercises extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const ExerciseDetails(),
+                    builder: (_) => ExerciseDetails(exercise: exercises[0]),
                   ),
                 );
               },

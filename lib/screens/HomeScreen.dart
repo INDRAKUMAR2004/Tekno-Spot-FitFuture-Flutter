@@ -1,13 +1,10 @@
-// lib/screens/home_screen.dart
+// lib/screens/HomeScreen.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fitfuture/utils/constants.dart';
 import 'package:flutter/material.dart';
 
-import 'package:fitfuture/screens/about.dart';
-import 'package:fitfuture/screens/corechallenge.dart';
-import 'package:fitfuture/screens/excercise_details.dart';
-import 'package:fitfuture/screens/notifications.dart';
 import 'package:fitfuture/screens/profile.dart';
 import 'package:fitfuture/screens/workoutoverview.dart';
 import 'package:fitfuture/screens/nutritionOverview.dart';
@@ -18,24 +15,6 @@ import 'package:fitfuture/screens/chatbot.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  static Widget sectionTitle(BuildContext context, String title,
-      {String? subtitle}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(
-          title,
-          style: const TextStyle(
-              fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF39FF14)),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        ]
-      ]),
-    );
-  }
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -43,20 +22,27 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  /// ✅ Fetch user name from Firestore (users collection), fallback to FirebaseAuth
-  Future<String> _getUserName() async {
+  Future<Map<String, String>> _getUserData() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return "Guest";
+    if (user == null) return {"name": "Athlete", "gender": "Male"};
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance.collection("users").doc(user.uid).get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .get();
       final data = snapshot.data();
-      if (data != null && data['name'] != null && data['name'].toString().isNotEmpty) {
-        return data['name'];
+      if (data != null) {
+        return {
+          "name": data['name']?.toString() ?? "Athlete",
+          "gender": data['gender']?.toString() ?? "Male",
+        };
       }
     } catch (_) {}
-    return user.displayName ?? user.email ?? "User";
+    return {
+      "name": user.displayName ?? user.email?.split('@')[0] ?? "Athlete",
+      "gender": "Male",
+    };
   }
 
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
@@ -64,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      _HomePageBody(getUserName: _getUserName),
+      _HomePageBody(getUserData: _getUserData),
       const NutritionOverview(),
       const DiscoverScreen(),
       const ProgressTracking(),
@@ -72,465 +58,290 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
+      backgroundColor: AppConstants.darkBackground,
       body: IndexedStack(index: _selectedIndex, children: pages),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: const Color(0xFF39FF14),
-        unselectedItemColor: Colors.grey,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu), label: 'Nutrition'),
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Discover'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Progress'),
-          BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: 'Chatbot'),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border:
+              Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: AppConstants.darkBackground,
+          selectedItemColor: AppConstants.neonGreen,
+          unselectedItemColor: Colors.grey[600],
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.home_filled), label: 'Home'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.restaurant_menu), label: 'Diet'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.explore_outlined), label: 'Explore'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.analytics_outlined), label: 'Stats'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.chat_bubble_outline), label: 'AI'),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// -------------------- HOME PAGE BODY --------------------
 class _HomePageBody extends StatelessWidget {
-  final Future<String> Function() getUserName;
-  const _HomePageBody({required this.getUserName});
+  final Future<Map<String, String>> Function() getUserData;
+  const _HomePageBody({required this.getUserData});
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          FutureBuilder<String>(
-            future: getUserName(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text("Loading...",
-                      style: TextStyle(color: Color(0xFF39FF14))),
-                );
-              }
-              return Header(userName: snapshot.data ?? "Guest");
-            },
-          ),
-          const SizedBox(height: 12),
-          const SearchBar(),
-          const SizedBox(height: 16),
-          const HomeBanner(),
-          const SizedBox(height: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: FutureBuilder<Map<String, String>>(
+                future: getUserData(),
+                builder: (context, snapshot) {
+                  final name = snapshot.data?["name"] ?? "Athlete";
+                  final gender = snapshot.data?["gender"] ?? "Male";
+                  final portraitUrl = gender.toLowerCase() == "female"
+                      ? "https://randomuser.me/api/portraits/women/20.jpg"
+                      : "https://randomuser.me/api/portraits/men/20.jpg";
 
-          /// CHALLENGES
-          HomeScreen.sectionTitle(context, "Challenges"),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 230,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: const [
-                ChallengeCard(
-                  days: "14-Day",
-                  title: "Core Challenge",
-                  points: ["5–10 min abs daily", "Plank, Crunches, Leg Raise"],
-                  goal: "Stronger core & posture",
-                ),
-                ChallengeCard(
-                  days: "7-Day",
-                  title: "Full Body Burn",
-                  points: ["15–20 min", "Squats, Pushups, Burpees"],
-                  goal: "Boost stamina",
-                ),
-                ChallengeCard(
-                  days: "30-Day",
-                  title: "Yoga Flow",
-                  points: ["20 min daily", "Flexibility & Calmness"],
-                  goal: "Improve mobility",
-                ),
-              ],
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Welcome back,",
+                              style: TextStyle(
+                                  color: Colors.grey[400], fontSize: 13),
+                            ),
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ProfileScreen())),
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppConstants.neonGreen,
+                          ),
+                          child: CircleAvatar(
+                            radius: 22,
+                            backgroundImage: NetworkImage(portraitUrl),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
+            const SizedBox(height: 30),
 
-          /// MADE FOR YOU
-          HomeScreen.sectionTitle(context, "Made for You",
-              subtitle: "Personalized workouts to match your goals."),
-          const WorkoutCard(
-            title: "Full-Body Circuit",
-            description: "Balanced strength and cardio",
-            details: "30 mins • 8 exercises",
-            image: "assets/Images/fbc.jpg",
-          ),
-          const WorkoutCard(
-            title: "Morning Energy Flow",
-            description: "Gentle stretches and light cardio",
-            details: "20 mins • 5 exercises",
-            image: "assets/Images/mef.jpg",
-          ),
-          const WorkoutCard(
-            title: "Strength Challenge",
-            description: "Upper, lower, core",
-            details: "30 mins • 8 exercises",
-            image: "assets/Images/sc.jpg",
-          ),
-
-          /// FAVOURITES
-          HomeScreen.sectionTitle(context, "Our Favourites",
-              subtitle: "Curated workouts we love for you."),
-          SizedBox(
-            height: 220,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: const [
-                ExerciseCard(
-                    title: "Squat Exercise",
-                    duration: "12 mins",
-                    calories: "120 Kcal",
-                    image: "assets/Images/squat.jpg"),
-                ExerciseCard(
-                    title: "Core Crusher",
-                    duration: "25 mins",
-                    calories: "180 Kcal",
-                    image: "assets/Images/corecrusher.jpg"),
-                ExerciseCard(
-                    title: "Cardio Kick",
-                    duration: "25 mins",
-                    calories: "200 Kcal",
-                    image: "assets/Images/cardio.jpg"),
-                ExerciseCard(
-                    title: "Lunge Blast",
-                    duration: "18 mins",
-                    calories: "160 Kcal",
-                    image: "assets/Images/lbp.jpg"),
-              ],
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                height: 55,
+                decoration: BoxDecoration(
+                  color: AppConstants.surfaceColor,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.grey),
+                    SizedBox(width: 12),
+                    Text("Search workouts...",
+                        style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 30),
 
-          /// TOP HITS
-          HomeScreen.sectionTitle(context, "Top Hits",
-              subtitle: "Must-try workouts everyone loves."),
-          const WorkoutCard(
-            title: "Power HIIT Blast",
-            description: "High intensity intervals",
-            details: "25 mins • 6 exercises",
-            image: "assets/Images/hiit.jpg",
-          ),
-          const WorkoutCard(
-            title: "Morning Yoga Flow",
-            description: "Gentle stretch & breathing",
-            details: "25 mins • 6 exercises",
-            image: "assets/Images/myf.jpg",
-          ),
-          const WorkoutCard(
-            title: "Cardio Kickboxing",
-            description: "Punch & kick high-energy",
-            details: "25 mins • 6 exercises",
-            image: "assets/Images/ckb.jpg",
-          ),
+            // Featured Challenge
+            _sectionTitle("Featured Challenge"),
+            const SizedBox(height: 15),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildFeaturedCard(context),
+            ),
+            const SizedBox(height: 30),
 
-          const SizedBox(height: 32),
-        ]),
+            // Recommended Workouts
+            _sectionTitle("Recommended for You"),
+            const SizedBox(height: 15),
+            SizedBox(
+              height: 240,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(left: 20),
+                children: [
+                  _workoutCard(context, "Full Body HIIT",
+                      "25 Min • High Intensity", "assets/Images/bicycle.jpg"),
+                  _workoutCard(context, "Morning Yoga", "15 Min • Relaxation",
+                      "assets/Images/russian.jpg"),
+                  _workoutCard(context, "Core Strength",
+                      "20 Min • Intermediate", "assets/Images/legraises.jpg"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            // Daily Motivation
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppConstants.neonGreen.withOpacity(0.8),
+                      Colors.blueAccent.withOpacity(0.8)
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Daily Motivation",
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18)),
+                    SizedBox(height: 8),
+                    Text(
+                      "\"The only bad workout is the one that didn't happen.\"",
+                      style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
-}
 
-/// -------------------- HEADER --------------------
-class Header extends StatelessWidget {
-  final String userName;
-  const Header({super.key, required this.userName});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _sectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text("Hi, $userName",
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF39FF14))),
-            const SizedBox(height: 4),
-            const Text("It's time to challenge your limits.",
-                style: TextStyle(fontSize: 12, color: Color(0xFF39FF14))),
-          ]),
-        ),
-        IconButton(
-            icon: const Icon(Icons.info, color: Color(0xFF39FF14)),
-            onPressed: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const AboutPage()))),
-        IconButton(
-            icon: const Icon(Icons.notifications, color: Color(0xFF39FF14)),
-            onPressed: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const NotificationsPage()))),
-        IconButton(
-            icon: const Icon(Icons.person, color: Color(0xFF39FF14)),
-            onPressed: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
-      ]),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Text(
+        title,
+        style: const TextStyle(
+            color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+      ),
     );
   }
-}
 
-/// -------------------- SEARCH BAR --------------------
-class SearchBar extends StatelessWidget {
-  const SearchBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFF39FF14)),
-      ),
-      child: const Row(children: [
-        Icon(Icons.search, color: Color(0xFF39FF14)),
-        SizedBox(width: 8),
-        Expanded(
-          child: Material(
-            color: Colors.transparent,
-            child: TextField(
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: "Search",
-                hintStyle: TextStyle(color: Color(0xFF39FF14)),
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 12),
-              ),
-              style: TextStyle(color: Color(0xFF39FF14)),
-            ),
+  Widget _buildFeaturedCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+          context, MaterialPageRoute(builder: (_) => WorkoutOverview())),
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          image: const DecorationImage(
+            image: AssetImage("assets/Images/plank.jpg"),
+            fit: BoxFit.cover,
           ),
         ),
-      ]),
-    );
-  }
-}
-
-/// -------------------- HOME BANNER --------------------
-class HomeBanner extends StatelessWidget {
-  const HomeBanner({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      height: 120,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        image: const DecorationImage(
-            image: AssetImage("assets/Images/banner.jpg"), fit: BoxFit.cover),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(colors: [
-            Colors.black.withOpacity(0.35),
-            Colors.transparent,
-          ], begin: Alignment.bottomCenter, end: Alignment.topCenter),
-        ),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text("Weekly Challenge",
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+            ),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "30-Day Core Challenge",
                 style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: Colors.lightBlue)),
-            SizedBox(height: 6),
-            Text("Strengthen your core & sculpt obliques.",
-                style: TextStyle(fontSize: 12, color: Colors.white)),
-            SizedBox(height: 2),
-            Text("Hold steady, twist with control each day.",
-                style: TextStyle(fontSize: 10, color: Colors.white)),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-/// -------------------- CHALLENGE CARD --------------------
-class ChallengeCard extends StatelessWidget {
-  final String days;
-  final String title;
-  final List<String> points;
-  final String goal;
-
-  const ChallengeCard({
-    super.key,
-    required this.days,
-    required this.title,
-    required this.points,
-    required this.goal,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () =>
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const ChallengeOverview())),
-      child: Container(
-        width: 260,
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF39FF14)),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(days,
-              style: const TextStyle(
-                  color: Color(0xFF39FF14), fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Text(title,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 8),
-          ...points.map((p) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child:
-                    Text("• $p", style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              )),
-          const Spacer(),
-          Text(goal,
-              style:
-                  const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: ElevatedButton(
-              onPressed: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (_) => const ChallengeOverview())),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF39FF14),
-                foregroundColor: Colors.black,
+                    color: AppConstants.neonGreen,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
               ),
-              child: const Text("Start"),
-            ),
+              Text(
+                "Step up your fitness game today.",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+            ],
           ),
-        ]),
+        ),
       ),
     );
   }
-}
 
-/// -------------------- EXERCISE CARD --------------------
-class ExerciseCard extends StatelessWidget {
-  final String title;
-  final String duration;
-  final String calories;
-  final String image;
-
-  const ExerciseCard(
-      {super.key,
-      required this.title,
-      required this.duration,
-      required this.calories,
-      required this.image});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _workoutCard(
+      BuildContext context, String title, String subtitle, String image) {
     return GestureDetector(
-      onTap: () =>
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const ExerciseDetails())),
+      onTap: () => Navigator.push(
+          context, MaterialPageRoute(builder: (_) => WorkoutOverview())),
       child: Container(
-        width: 180,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFF39FF14)),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+        width: 200,
+        margin: const EdgeInsets.only(right: 15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
               child: Image.asset(image,
-                  height: 110, width: double.infinity, fit: BoxFit.cover)),
-          Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(title,
-                  style: const TextStyle(
-                      color: Color(0xFF39FF14), fontWeight: FontWeight.bold))),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Row(children: [
-                const Icon(Icons.timer, size: 14, color: Color(0xFF39FF14)),
-                const SizedBox(width: 6),
-                Text(duration,
-                    style: const TextStyle(color: Colors.white, fontSize: 12))
-              ]),
-              Row(children: [
-                const Icon(Icons.local_fire_department,
-                    size: 14, color: Color(0xFF39FF14)),
-                const SizedBox(width: 6),
-                Text(calories,
-                    style: const TextStyle(color: Colors.white, fontSize: 12))
-              ]),
-            ]),
-          )
-        ]),
-      ),
-    );
-  }
-}
-
-/// -------------------- WORKOUT CARD --------------------
-class WorkoutCard extends StatelessWidget {
-  final String title;
-  final String description;
-  final String details;
-  final String image;
-
-  const WorkoutCard(
-      {super.key,
-      required this.title,
-      required this.description,
-      required this.details,
-      required this.image});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () =>
-          Navigator.push(context, MaterialPageRoute(builder: (_) => WorkoutOverview())),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF39FF14)),
+                  height: 140, width: 200, fit: BoxFit.cover),
+            ),
+            const SizedBox(height: 12),
+            Text(title,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16)),
+            const SizedBox(height: 4),
+            Text(subtitle,
+                style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          ],
         ),
-        child: Row(children: [
-          ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: Image.asset(image,
-                  width: 110, height: 80, fit: BoxFit.cover)),
-          const SizedBox(width: 12),
-          Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF39FF14))),
-              const SizedBox(height: 6),
-              Text(description,
-                  style: const TextStyle(fontSize: 13, color: Colors.grey)),
-              const SizedBox(height: 4),
-              Text(details,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
-            ]),
-          )
-        ]),
       ),
     );
   }

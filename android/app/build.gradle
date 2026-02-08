@@ -39,13 +39,6 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
-    defaultConfig {
-        applicationId = "com.teknospot.fitfuture"
-        minSdkVersion flutter.minSdkVersion
-        targetSdk = 35
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-    }
 
 
     // -----------------------------------------------------------
